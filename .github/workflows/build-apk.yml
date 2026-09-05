@@ -25,6 +25,32 @@ jobs:
           test -f "$SRC/app/build.gradle.kts"
           echo "SOURCE_DIR=$SRC" >> "$GITHUB_ENV"
 
+      - name: Apply compiler compatibility fix
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p = Path(os.environ['RUNNER_TEMP']) / 'loreforge-src/app/src/main/java/com/loreforge/local/inference/LlamaCppModel.kt'
+          s = p.read_text()
+          old = '''    override suspend fun stop() = withContext(Dispatchers.Default) {
+              stopping.set(true)
+              native?.cancelGeneration()
+          }
+          '''
+          new = '''    override suspend fun stop() {
+              withContext(Dispatchers.Default) {
+                  stopping.set(true)
+                  native?.cancelGeneration()
+                  Unit
+              }
+          }
+          '''
+          if old not in s:
+              raise SystemExit('Expected stop() implementation not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
