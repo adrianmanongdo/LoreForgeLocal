@@ -33,22 +33,19 @@ jobs:
           from pathlib import Path
           p = Path(os.environ['RUNNER_TEMP']) / 'loreforge-src/app/src/main/java/com/loreforge/local/inference/LlamaCppModel.kt'
           s = p.read_text()
-          old = '''    override suspend fun stop() = withContext(Dispatchers.Default) {
-              stopping.set(true)
-              native?.cancelGeneration()
-          }
-          '''
-          new = '''    override suspend fun stop() {
-              withContext(Dispatchers.Default) {
-                  stopping.set(true)
-                  native?.cancelGeneration()
-                  Unit
-              }
-          }
-          '''
-          if old not in s:
-              raise SystemExit('Expected stop() implementation not found')
-          p.write_text(s.replace(old, new, 1))
+          marker = "    override suspend fun stop() = withContext(Dispatchers.Default) {"
+          start = s.index(marker)
+          end = s.index("\n    }", start) + len("\n    }")
+          lines = [
+              "    override suspend fun stop() {",
+              "        withContext(Dispatchers.Default) {",
+              "            stopping.set(true)",
+              "            native?.cancelGeneration()",
+              "            Unit",
+              "        }",
+              "    }",
+          ]
+          p.write_text(s[:start] + "\n".join(lines) + s[end:])
           PY
 
       - name: Set up Java 17
