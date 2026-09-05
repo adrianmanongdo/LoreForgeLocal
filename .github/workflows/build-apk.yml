@@ -1,0 +1,74 @@
+name: Build LoreForge APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout bootstrap repository
+        uses: actions/checkout@v4
+
+      - name: Reconstruct LoreForge source
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="$RUNNER_TEMP/loreforge-src"
+          mkdir -p "$SRC"
+          cat ci/payload.part00 ci/payload.part01 ci/payload.part02 ci/payload.part03 ci/payload.part04 ci/payload.part05 ci/payload.part06 ci/payload.part07 ci/payload.part08 > "$RUNNER_TEMP/loreforge-payload.b64"
+          base64 --decode "$RUNNER_TEMP/loreforge-payload.b64" > "$RUNNER_TEMP/loreforge-source.zip"
+          unzip -q "$RUNNER_TEMP/loreforge-source.zip" -d "$SRC"
+          test -f "$SRC/settings.gradle.kts"
+          test -f "$SRC/app/build.gradle.kts"
+          echo "SOURCE_DIR=$SRC" >> "$GITHUB_ENV"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        shell: bash
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Set up Gradle 8.13
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Verify offline/privacy source rules
+        working-directory: ${{ env.SOURCE_DIR }}
+        shell: bash
+        run: bash scripts/verify_source_privacy.sh
+
+      - name: Build debug APK
+        working-directory: ${{ env.SOURCE_DIR }}
+        shell: bash
+        run: gradle :app:assembleDebug --stacktrace --no-daemon
+
+      - name: Verify final APK has no INTERNET permission
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$SOURCE_DIR/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$APK" | tee "$RUNNER_TEMP/permissions.txt"
+          if grep -q 'android.permission.INTERNET' "$RUNNER_TEMP/permissions.txt"; then
+            echo 'FAIL: android.permission.INTERNET is present in the merged APK'
+            exit 1
+          fi
+          cp "$APK" "$RUNNER_TEMP/LoreForgeLocal-debug.apk"
+
+      - name: Upload ready-to-install APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LoreForgeLocal-debug-apk
+          path: ${{ runner.temp }}/LoreForgeLocal-debug.apk
+          if-no-files-found: error
