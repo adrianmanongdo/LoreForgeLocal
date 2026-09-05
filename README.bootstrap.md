@@ -1,0 +1,1 @@
+LoreForgeLocal bootstrap commit for Android APK build.
