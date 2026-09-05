@@ -1,0 +1,90 @@
+name: Build LoreForge APK v0.2.0 FINAL
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/loreforge-build-v0.2.0-final.yml'
+      - '.github/workflows/LoreForgeLocal-v0.2.0-source*.tar.xz'
+      - 'LoreForgeLocal-v0.2.0-source*.tar.xz'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Locate and restore LoreForge source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          echo 'Candidate source archives:'
+          find "$GITHUB_WORKSPACE" -maxdepth 6 -type f -name 'LoreForgeLocal-v0.2.0-source*.tar.xz' -print || true
+          ARCHIVE="$(find "$GITHUB_WORKSPACE" -maxdepth 6 -type f -name 'LoreForgeLocal-v0.2.0-source*.tar.xz' -print -quit)"
+          if [ -z "$ARCHIVE" ]; then
+            echo 'ERROR: No LoreForge v0.2.0 source archive was found.'
+            echo 'All repository files:'
+            find "$GITHUB_WORKSPACE" -maxdepth 6 -type f | sort
+            exit 1
+          fi
+          echo "Using source archive: $ARCHIVE"
+          rm -rf "$GITHUB_WORKSPACE/restored"
+          mkdir -p "$GITHUB_WORKSPACE/restored"
+          tar -xJf "$ARCHIVE" -C "$GITHUB_WORKSPACE/restored"
+          if [ -d "$GITHUB_WORKSPACE/restored/LoreForgeLocal_v2" ]; then
+            mv "$GITHUB_WORKSPACE/restored/LoreForgeLocal_v2" "$GITHUB_WORKSPACE/restored/LoreForgeLocal"
+          fi
+          test -f "$GITHUB_WORKSPACE/restored/LoreForgeLocal/settings.gradle.kts"
+          grep -q 'versionName = "0.2.0"' "$GITHUB_WORKSPACE/restored/LoreForgeLocal/app/build.gradle.kts"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        shell: bash
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Set up Gradle 8.13
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Source privacy checks
+        working-directory: restored/LoreForgeLocal
+        shell: bash
+        run: chmod +x scripts/verify_source_privacy.sh && ./scripts/verify_source_privacy.sh
+
+      - name: Build debug APK
+        working-directory: restored/LoreForgeLocal
+        shell: bash
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Verify APK version and no INTERNET permission
+        shell: bash
+        run: |
+          set -euxo pipefail
+          APK="$GITHUB_WORKSPACE/restored/LoreForgeLocal/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | tee /tmp/badging.txt
+          grep -q "versionName='0.2.0'" /tmp/badging.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$APK" | tee /tmp/permissions.txt
+          if grep -q 'android.permission.INTERNET' /tmp/permissions.txt; then
+            echo 'FAIL: INTERNET permission is present in merged APK'
+            exit 1
+          fi
+
+      - name: Upload ready-to-install APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LoreForgeLocal-v0.2.0-debug-apk
+          path: restored/LoreForgeLocal/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
