@@ -1,0 +1,67 @@
+name: NullSignal Final APK
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - '.github/workflows/nullsignal-final.yml'
+      - '.github/workflows/nullsignal-final-source.b64'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Restore NullSignal 1.0 source
+        shell: bash
+        run: |
+          base64 -d .github/workflows/nullsignal-final-source.b64 > /tmp/nullsignal.tar.gz
+          tar -xzf /tmp/nullsignal.tar.gz -C "$GITHUB_WORKSPACE"
+          test -f "$GITHUB_WORKSPACE/NullSignalMVP/settings.gradle"
+
+      - name: Build debug APK
+        working-directory: NullSignalMVP
+        shell: bash
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Verify local-only merged APK
+        shell: bash
+        run: |
+          APK="$GITHUB_WORKSPACE/NullSignalMVP/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$APK" | tee /tmp/permissions.txt
+          if grep -q 'android.permission.INTERNET' /tmp/permissions.txt; then
+            echo 'FAIL: android.permission.INTERNET is present in merged APK'
+            exit 1
+          fi
+
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NullSignal-1.0.0-APK
+          path: NullSignalMVP/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
