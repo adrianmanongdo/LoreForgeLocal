@@ -35,6 +35,14 @@ jobs:
       - name: Restore NullSignal 2.0 source
         shell: bash
         run: |
+          echo "332f2711f1f962b76c4a89eb750044b1cec8ebd4a2b6255ce3246ac7e9755f91  .github/workflows/nullsignal-v2-source.part1" | sha256sum -c -
+          echo "1aa951c40b9b5a10723d49b8b854faf4cb03ddc49014123abf77149d6d7f770e  .github/workflows/nullsignal-v2-source.part2" | sha256sum -c -
+          echo "8d497bf672914a78778d0cfc7bfc7f64af810d5a64342c85c51667cfaf15cc84  .github/workflows/nullsignal-v2-source.part3" | sha256sum -c -
+          echo "8de52fe4fde1675e9c57eeabccf629bb014091e834731db758a122aa9eeab669  .github/workflows/nullsignal-v2-source.part4" | sha256sum -c -
+          echo "ecb51f73e084201bf01a9f375f08a1e431105ac1b932b32b778402e2058d8021  .github/workflows/nullsignal-v2-source.part5" | sha256sum -c -
+          echo "066ea6cf251655779d91b713a468fd81abdebd7fe0018ce2a360f6e683c21a5c  .github/workflows/nullsignal-v2-source.part6" | sha256sum -c -
+          echo "4c8bf138b953cf4c77602844cde5c759d73b47cbd90b325a0b36c8d3cca4a0c6  .github/workflows/nullsignal-v2-source.part7" | sha256sum -c -
+          echo "04988c871fb102872ceb36460d2eb6c0216ea6bf1ed83dc177577b78596bf384  .github/workflows/nullsignal-v2-source.part8" | sha256sum -c -
           cat .github/workflows/nullsignal-v2-source.part1 \
               .github/workflows/nullsignal-v2-source.part2 \
               .github/workflows/nullsignal-v2-source.part3 \
@@ -44,6 +52,7 @@ jobs:
               .github/workflows/nullsignal-v2-source.part7 \
               .github/workflows/nullsignal-v2-source.part8 > /tmp/nullsignal-v2.b64
           test "$(wc -c < /tmp/nullsignal-v2.b64)" -eq 52336
+          echo "aa58de390945dc0059633d57713765b635281c7392e4aa88ab5c24fb9cea8b0a  /tmp/nullsignal-v2.b64" | sha256sum -c -
           base64 -d /tmp/nullsignal-v2.b64 > /tmp/nullsignal-v2.tar.gz
           echo "dbc0cd26b205b5a7f7d5524019a68eb5980fd3d62ee7afc073c5fc75b6fa3c50  /tmp/nullsignal-v2.tar.gz" | sha256sum -c -
           tar -xzf /tmp/nullsignal-v2.tar.gz
