@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
     paths:
       - '.github/workflows/nullsignal-final.yml'
-      - '.github/workflows/nullsignal-final-source.b64'
+      - '.github/workflows/nullsignal-final-source.part*'
   workflow_dispatch:
 
 permissions:
@@ -39,7 +39,14 @@ jobs:
       - name: Restore NullSignal 1.0 source
         shell: bash
         run: |
-          base64 -d .github/workflows/nullsignal-final-source.b64 > /tmp/nullsignal.tar.gz
+          cat .github/workflows/nullsignal-final-source.part1 \
+              .github/workflows/nullsignal-final-source.part2 \
+              .github/workflows/nullsignal-final-source.part3 \
+              .github/workflows/nullsignal-final-source.part4 \
+              .github/workflows/nullsignal-final-source.part5 > /tmp/nullsignal.b64
+          test "$(wc -c < /tmp/nullsignal.b64)" -eq 31348
+          base64 -d /tmp/nullsignal.b64 > /tmp/nullsignal.tar.gz
+          echo "602264388f99167a3dc43b8642d3dcb3a90c31cd897317e757752ac452549f8e  /tmp/nullsignal.tar.gz" | sha256sum -c -
           tar -xzf /tmp/nullsignal.tar.gz -C "$GITHUB_WORKSPACE"
           test -f "$GITHUB_WORKSPACE/NullSignalMVP/settings.gradle"
 
