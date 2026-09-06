@@ -49,6 +49,10 @@ jobs:
           echo "fa36400a0908763733b574daa40c851619c83cf4408997a3eec4cbb9af4230f4  /tmp/nullsignal.tar.gz" | sha256sum -c -
           tar -xzf /tmp/nullsignal.tar.gz -C "$GITHUB_WORKSPACE"
           test -f "$GITHUB_WORKSPACE/NullSignalMVP/settings.gradle"
+          # v0.1's lightweight skeleton disabled AndroidX. The robust 1.0 build
+          # uses WorkManager and modern Play Services, so AndroidX is required.
+          sed -i 's/android.useAndroidX=false/android.useAndroidX=true/' "$GITHUB_WORKSPACE/NullSignalMVP/gradle.properties"
+          grep -q '^android.useAndroidX=true$' "$GITHUB_WORKSPACE/NullSignalMVP/gradle.properties"
 
       - name: Build debug APK
         working-directory: NullSignalMVP
