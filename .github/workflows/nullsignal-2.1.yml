@@ -46,13 +46,15 @@ jobs:
           tar -xzf /tmp/nullsignal-v2.tar.gz
           test -f NullSignalMVP/settings.gradle
 
-      - name: Apply commute patches
+      - name: Apply commute and compatibility patches
         run: |
           python .github/workflows/nullsignal-2.1-patch-transit.py
           python .github/workflows/nullsignal-2.1-patch-core.py
           python .github/workflows/nullsignal-2.1-patch-store.py
           python .github/workflows/nullsignal-2.1-patch-ui1.py
           python .github/workflows/nullsignal-2.1-patch-ui2.py
+          sed -i "s/androidx.core:core:1.17.0/androidx.core:core:1.15.0/" NullSignalMVP/app/build.gradle
+          grep -q "androidx.core:core:1.15.0" NullSignalMVP/app/build.gradle
           grep -q "versionName '2.1.0'" NullSignalMVP/app/build.gradle
           grep -q 'possible_missed_stop' NullSignalMVP/app/src/main/java/com/nullsignal/local/MobilityEngine.java
           test -f NullSignalMVP/app/src/main/java/com/nullsignal/local/TransitInference.java
