@@ -38,7 +38,10 @@ jobs:
           echo "332f2711f1f962b76c4a89eb750044b1cec8ebd4a2b6255ce3246ac7e9755f91  .github/workflows/nullsignal-v2-source.part1" | sha256sum -c -
           echo "1aa951c40b9b5a10723d49b8b854faf4cb03ddc49014123abf77149d6d7f770e  .github/workflows/nullsignal-v2-source.part2" | sha256sum -c -
           echo "8d497bf672914a78778d0cfc7bfc7f64af810d5a64342c85c51667cfaf15cc84  .github/workflows/nullsignal-v2-source.part3" | sha256sum -c -
-          echo "8de52fe4fde1675e9c57eeabccf629bb014091e834731db758a122aa9eeab669  .github/workflows/nullsignal-v2-source.part4" | sha256sum -c -
+          echo "5a93e9deed6bc074677b99ef499e9c4a2fe0c8af8956dbb77dcc7b0f7c38330d  .github/workflows/nullsignal-v2-source.part4a" | sha256sum -c -
+          echo "04a0263bf4539bda6297bb6aedc8aa7eaa07ba8bc3176d88ef743445a0bf5e9d  .github/workflows/nullsignal-v2-source.part4b" | sha256sum -c -
+          echo "83be1c0c1b0b875781f957cbc5e5dc5c2fa962bf582699f05ba0778ddb6690a6  .github/workflows/nullsignal-v2-source.part4c" | sha256sum -c -
+          echo "b42c3a696516b2bb3aba04df1b1da37673b6eae4949e3adf7373ce6cf44fa9ff  .github/workflows/nullsignal-v2-source.part4d" | sha256sum -c -
           echo "ecb51f73e084201bf01a9f375f08a1e431105ac1b932b32b778402e2058d8021  .github/workflows/nullsignal-v2-source.part5" | sha256sum -c -
           echo "066ea6cf251655779d91b713a468fd81abdebd7fe0018ce2a360f6e683c21a5c  .github/workflows/nullsignal-v2-source.part6" | sha256sum -c -
           echo "4c8bf138b953cf4c77602844cde5c759d73b47cbd90b325a0b36c8d3cca4a0c6  .github/workflows/nullsignal-v2-source.part7" | sha256sum -c -
@@ -46,7 +49,10 @@ jobs:
           cat .github/workflows/nullsignal-v2-source.part1 \
               .github/workflows/nullsignal-v2-source.part2 \
               .github/workflows/nullsignal-v2-source.part3 \
-              .github/workflows/nullsignal-v2-source.part4 \
+              .github/workflows/nullsignal-v2-source.part4a \
+              .github/workflows/nullsignal-v2-source.part4b \
+              .github/workflows/nullsignal-v2-source.part4c \
+              .github/workflows/nullsignal-v2-source.part4d \
               .github/workflows/nullsignal-v2-source.part5 \
               .github/workflows/nullsignal-v2-source.part6 \
               .github/workflows/nullsignal-v2-source.part7 \
